@@ -42,15 +42,22 @@ gaussian_kernel <- function(distance, sigma=2, length=5) {
     return(sigma^2 * exp(-distance^2 / (2 * length^2)))
 }
 
+## Quick and dirty spatial locations (points in a grid)
 grid_width <- 20
 locations <- expand.grid(coord_x=seq(1, grid_width), coord_y=seq(1, grid_width))
 dim(locations)
+head(locations)
 
 distances <- as.matrix(dist(locations[, c("coord_x", "coord_y")]))
 
+## This is sqrt(2), the spatial distance from locations[1, ] to locations[22, ]
+distances[1, 22]
+
 beta_x1 <- 5
 
-lengths_epsilon <- c(0.25, 0.5, 1, 2, 4, 8)
+## TODO Run a single simulation and plot spatial data run_single_simulation
+
+lengths_epsilon <- c(1/8, 0.25, 0.5, 1, 2, 4, 6, 8, 10)
 
 simulations <- lapply(lengths_epsilon, function(length_epsilon) {
     run_simulations(locations, distances, length_x1=2, length_epsilon=length_epsilon, beta_x1=beta_x1, n_sims=500)
@@ -64,9 +71,10 @@ p <- (ggplot(simulations, aes(x=estimated_beta_x1)) +
       geom_histogram(binwidth=0.1, color="black", fill="white") +
       geom_vline(xintercept=beta_x1, linetype=2, alpha=0.5) +
       facet_wrap(~ length_epsilon_subtitle) +
+      ylab("") +
       theme_bw())
 filename <- "sampling_distribution_beta_x1_with_varying_levels_of_spatial_correlation.png"
-ggsave(filename=filename, plot=p)
+ggsave(filename=filename, plot=p, width=8, height=6, unit="in")
 
 ## Looks like estimated_beta_x1 is unbiased,
 ## but the 95% CI does not have anything close to 95% coverage
@@ -77,8 +85,14 @@ simulations <- data.table(simulations)
 
 coverage <- simulations[, list(pr_conf_interval_contains_beta_x1=mean(conf_interval_contains_beta_x1)), by=c("length_epsilon")]
 
-p <- ggplot(coverage, aes(x=length_epsilon, y=pr_conf_interval_contains_beta_x1)) + geom_point()
-
+p <- (ggplot(coverage, aes(x=length_epsilon, y=pr_conf_interval_contains_beta_x1)) +
+      geom_point() +
+      geom_hline(yintercept=0.95, linetype=2, alpha=0.5) +
+      ylab("coverage of 95% confidence interval for beta") +
+      xlab("kernel length for epsilon (controls spatial correlation)") +
+      theme_bw())
+filename <- "ci_coverage_for_beta_x1_with_varying_levels_of_spatial_correlation.png"
+ggsave(filename=filename, plot=p, width=8, height=6, unit="in")
 
 ## TODO Run for a range of kernel lengths for epsilon and plot coverage probability
 
@@ -87,6 +101,9 @@ p <- ggplot(coverage, aes(x=length_epsilon, y=pr_conf_interval_contains_beta_x1)
 ## TODO Bootstrap with spatial correlation?
 
 ## TODO Estimate kernel length by maximum likelihood?
+
+## TODO Plot semi variogram (both of Y and of residuals!)
+## What matters (for messing up CI coverage) is spatial correlation in residuals, not in X
 
 ## p <- (ggplot(locations, aes(x=coord_x, y=coord_y, fill=epsilon)) +
 ##       geom_raster() +
