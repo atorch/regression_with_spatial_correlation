@@ -1,1 +1,5 @@
 # regression_with_spatial_correlation
+
+![Sampling Distribution](sampling_distribution_beta_x1_with_varying_levels_of_spatial_correlation.png)
+
+![CI Coverage](ci_coverage_for_beta_x1_with_varying_levels_of_spatial_correlation.png)
