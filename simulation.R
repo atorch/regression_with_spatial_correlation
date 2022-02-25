@@ -5,6 +5,8 @@ library(data.table)
 library(ggplot2)
 library(MASS)
 
+regression_constant <- 10
+
 save_maps_single_simulation <- function(locations, distances, length_x1, length_epsilon, beta_x1) {
 
     covariance_x1 <- gaussian_kernel(distances, length=length_x1)
@@ -13,9 +15,12 @@ save_maps_single_simulation <- function(locations, distances, length_x1, length_
     locations <- simulate_spatial_data(locations, covariance_x1, covariance_epsilon, beta_x1)
 
     title <- sprintf("Epsilon raster with length_epsilon=%s", length_epsilon)
+
+    ## Use the same midpoint and limits in the color scale so that plots are easily comparable
+    ## TODO Limits are related to gaussian_kernel sigma=2, magic numbers
     p <- (ggplot(locations, aes(x=coord_x, y=coord_y, fill=epsilon)) +
           geom_raster() +
-          scale_fill_gradient2("epsilon", low="#ef8a62", mid="white", high="#67a9cf", midpoint=0) +
+          scale_fill_gradient2("epsilon", low="#ef8a62", mid="white", high="#67a9cf", midpoint=0, limits=c(-8, 8)) +
           xlab("pixel coordinate (easting)") +
           ylab("pixel coordinate (northing)") +
           ggtitle(title) +
@@ -39,7 +44,7 @@ save_maps_single_simulation <- function(locations, distances, length_x1, length_
     title <- sprintf("Y raster with length_epsilon=%s, length_x1=%x", length_epsilon, length_x1)
     p <- (ggplot(locations, aes(x=coord_x, y=coord_y, fill=y)) +
           geom_raster() +
-          scale_fill_gradient2(low="#ef8a62", mid="white", high="#67a9cf", midpoint=mean(locations$y)) +
+          scale_fill_gradient2(low="#ef8a62", mid="white", high="#67a9cf", midpoint=regression_constant) +
           xlab("pixel coordinate (easting)") +
           ylab("pixel coordinate (northing)") +
           ggtitle(title) +
@@ -55,7 +60,7 @@ simulate_spatial_data <- function(locations, covariance_x1, covariance_epsilon, 
 
     ## True regression function: y = X*beta + epsilon
     ## TODO Include an x2 in the true regression function, just to make it interesting?
-    locations$y <- 10 + beta_x1*locations$x1 + locations$epsilon
+    locations$y <- regression_constant + beta_x1*locations$x1 + locations$epsilon
     return(locations)
 }
 
@@ -108,8 +113,9 @@ beta_x1 <- 5
 
 ## TODO Plot correlation as a fn of distance (and kernel length)
 
-## Run a single simulation and visualize it
+## Run single simulations and visualize them (save maps/rasters)
 save_maps_single_simulation(locations, distances, length_x1=2, length_epsilon=2, beta_x1=beta_x1)
+save_maps_single_simulation(locations, distances, length_x1=2, length_epsilon=0.25, beta_x1=beta_x1)
 
 lengths_epsilon <- c(1/8, 0.25, 0.5, 1, 2, 4, 6, 8, 10)
 
