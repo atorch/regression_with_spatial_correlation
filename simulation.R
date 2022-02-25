@@ -92,6 +92,7 @@ run_simulations <- function(locations, distances, length_x1, length_epsilon, bet
     return(simulations)
 }
 
+## Covariance function
 gaussian_kernel <- function(distance, sigma=2, length=5) {
     return(sigma^2 * exp(-distance^2 / (2 * length^2)))
 }
@@ -112,6 +113,15 @@ distances[1, 22]
 beta_x1 <- 5
 
 ## TODO Plot correlation as a fn of distance (and kernel length)
+
+p <- (ggplot(data.frame(distance=seq(min(distances), max(distances), 0.1)), aes(x=distance)) +
+      layer(stat="function", fun=gaussian_kernel, color=, args=list(length=4)) +
+      layer(stat="function", fun=gaussian_kernel, color=, args=list(length=2)) +
+      scale_color_manual(name="Functions",
+                         values=c("#377eb8", "#d95f02"), 
+                         labels=c("X^2 + X", "-X + 10") +
+      ylab("kernel aka covariance function") +
+      theme_bw())
 
 ## Run single simulations and visualize them (save maps/rasters)
 save_maps_single_simulation(locations, distances, length_x1=2, length_epsilon=2, beta_x1=beta_x1)
